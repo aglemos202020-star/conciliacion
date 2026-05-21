@@ -20,7 +20,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 # ── CONFIG ──────────────────────────────────
-API_KEY = os.environ.get("ANTHROPIC_API_KEY", "sk-ant-...")  # ← Podés poner tu clave acá o en Railway
+API_KEY = os.environ.get("ANTHROPIC_API_KEY", "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")  # ← Podés poner tu clave acá o en Railway
 UPLOAD_FOLDER = "uploads_tmp"
 UMBRAL_MATCH  = 4
 # ────────────────────────────────────────────
