@@ -1,0 +1,5 @@
+[phases.install]
+cmds = ["pip install flask anthropic pandas openpyxl reportlab gunicorn"]
+
+[start]
+cmd = "gunicorn app:app --timeout 120 --bind 0.0.0.0:$PORT"
