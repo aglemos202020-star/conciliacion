@@ -1,0 +1,868 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Caja de boletería</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --fondo:#E9EDF1; --papel:#FFFFFF; --tinta:#17202C; --tenue:#5C6878; --linea:#C9D1DA;
+  --tablero:#12283F; --tablero-txt:#DCE4EE; --tablero-tenue:#9FB0C4; --ambar:#F5B91E;
+  --venta:#1F5F9E; --devol:#A8432C; --ingreso:#2C7350; --egreso:#7A4E9C; --ok:#2C7350; --mal:#B3362A;
+  --ok-bg:#DDEFE4; --ok-txt:#1D5038; --mal-bg:#F7E0DC; --mal-txt:#7E2419; --r:6px;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fondo:#0E151E; --papel:#16212E; --tinta:#E4EAF1; --tenue:#93A1B2; --linea:#2A3848;
+    --tablero:#0A1928; --venta:#4C8FD6; --devol:#D97561; --ingreso:#5BB287; --egreso:#B08AD3; --ok:#5BB287; --mal:#E2685A;
+    --ok-bg:#16352A; --ok-txt:#A9E0C3; --mal-bg:#3D1C18; --mal-txt:#F2B8AE;
+  }
+}
+:root[data-theme="dark"] {
+  --fondo:#0E151E; --papel:#16212E; --tinta:#E4EAF1; --tenue:#93A1B2; --linea:#2A3848;
+  --tablero:#0A1928; --venta:#4C8FD6; --devol:#D97561; --ingreso:#5BB287; --egreso:#B08AD3; --ok:#5BB287; --mal:#E2685A;
+  --ok-bg:#16352A; --ok-txt:#A9E0C3; --mal-bg:#3D1C18; --mal-txt:#F2B8AE;
+}
+html { scroll-padding-top: env(safe-area-inset-top,0px); }
+*,*::before,*::after { box-sizing:border-box; }
+body { margin:0; background:var(--fondo); color:var(--tinta); font-family:"Barlow","Segoe UI",Arial,sans-serif; line-height:1.45; }
+h1,h2 { font-family:"Barlow Condensed","Arial Narrow",sans-serif; font-weight:600; line-height:1.1; margin:0 0 .6rem; }
+h1 { font-size:2rem; } h2 { font-size:1.35rem; }
+a, .link { color:var(--venta); }
+:focus-visible { outline:3px solid var(--ambar); outline-offset:2px; }
+.sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+
+body.ocupado { cursor:progress; } body.ocupado button { pointer-events:none; opacity:.7; }
+.demo-banda { background:var(--ambar); color:#1B1B1B; text-align:center; font-size:.88rem; padding:.35rem 1rem; }
+.demo-banda button { background:none; border:0; text-decoration:underline; font:inherit; font-weight:600; cursor:pointer; color:inherit; }
+
+.top { display:flex; align-items:center; gap:1.2rem; padding:.7rem 1.5rem; background:var(--tablero); color:#fff; flex-wrap:wrap; }
+.marca { font-family:"Barlow Condensed",sans-serif; font-size:1.35rem; font-weight:700; color:var(--ambar); }
+.top nav { display:flex; gap:.25rem; flex:1; flex-wrap:wrap; }
+.top nav button { background:none; border:0; color:#C8D3E0; padding:.35rem .7rem; border-radius:var(--r); font:inherit; cursor:pointer; }
+.top nav button:hover { color:#fff; }
+.top nav button[aria-current] { background:rgba(255,255,255,.12); color:#fff; }
+.quien { display:flex; gap:.9rem; align-items:center; color:#C8D3E0; flex-wrap:wrap; }
+.quien button { background:none; border:0; color:#fff; text-decoration:underline; font:inherit; cursor:pointer; }
+.quien select { width:auto; padding:.3rem .5rem; font-size:.95rem; background:#1E3A57; color:#fff; border-color:#3A5776; }
+.ag-chip { background:var(--ambar); color:var(--tablero); font-weight:700; padding:.1rem .55rem; border-radius:3px; font-family:"Barlow Condensed",sans-serif; font-size:1.05rem; }
+
+main { max-width:1200px; margin:0 auto; padding:1.5rem; }
+.aviso { padding:.7rem 1rem; border-radius:var(--r); margin:0 0 1rem; font-weight:500; }
+.aviso-ok { background:var(--ok-bg); color:var(--ok-txt); border-left:4px solid var(--ok); }
+.aviso-error { background:var(--mal-bg); color:var(--mal-txt); border-left:4px solid var(--mal); }
+.panel, .bloque { background:var(--papel); border:1px solid var(--linea); border-radius:var(--r); padding:1.2rem 1.35rem; margin-bottom:1.25rem; }
+
+.campo { display:flex; flex-direction:column; gap:.3rem; font-weight:500; font-size:.95rem; margin-bottom:.9rem; }
+.campo[hidden], .nota[hidden] { display:none; }
+input, select, textarea { font:inherit; font-size:1.05rem; padding:.6rem .7rem; border:1px solid var(--linea); border-radius:var(--r); background:var(--papel); color:var(--tinta); width:100%; }
+input:focus, select:focus, textarea:focus { border-color:var(--venta); outline:2px solid rgba(31,95,158,.25); }
+#importe { font-family:"Barlow Condensed",sans-serif; font-size:1.8rem; font-weight:600; padding:.4rem .7rem; }
+button { font:inherit; cursor:pointer; }
+.btn-principal { width:100%; padding:.85rem; border:0; border-radius:var(--r); background:var(--venta); color:#fff; font-weight:600; font-size:1.1rem; }
+.btn-secundario { padding:.6rem 1rem; border:1px solid var(--tinta); border-radius:var(--r); background:var(--papel); color:var(--tinta); font-weight:600; }
+.btn-texto { border:0; background:none; color:var(--venta); font-weight:600; padding:.2rem .3rem; }
+.nota { margin:-.2rem 0 .9rem; color:var(--devol); font-weight:500; }
+
+.tipos { border:0; padding:0; margin:0 0 1rem; display:grid; grid-template-columns:repeat(4,1fr); gap:.4rem; }
+.tipo { position:relative; }
+.tipo input { position:absolute; opacity:0; width:1px; height:1px; }
+.tipo span { display:block; text-align:center; padding:.65rem .3rem; border:2px solid var(--linea); border-radius:var(--r); font-weight:600; font-size:.95rem; cursor:pointer; }
+.tipo input:focus-visible + span { outline:3px solid var(--ambar); outline-offset:2px; }
+.tipo-venta input:checked + span { background:var(--venta); border-color:var(--venta); color:#fff; }
+.tipo-devolucion input:checked + span { background:var(--devol); border-color:var(--devol); color:#fff; }
+.tipo-ingreso input:checked + span { background:var(--ingreso); border-color:var(--ingreso); color:#fff; }
+.tipo-egreso input:checked + span { background:var(--egreso); border-color:var(--egreso); color:#fff; }
+.carga[data-tipo="devolucion"] .btn-principal { background:var(--devol); }
+.carga[data-tipo="ingreso"] .btn-principal { background:var(--ingreso); }
+.carga[data-tipo="egreso"] .btn-principal { background:var(--egreso); }
+
+.caja-grid { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:1.25rem; align-items:start; margin-bottom:1.25rem; }
+.caja-grid .panel { margin:0; }
+.tablero { background:var(--tablero); color:var(--tablero-txt); border-radius:var(--r); padding:1.4rem 1.5rem; }
+.tablero-cab { margin:0 0 1.2rem; color:var(--tablero-tenue); font-size:.92rem; }
+.tablero-rotulo { margin:0; font-size:1rem; }
+.tablero-monto { margin:.1rem 0 1.2rem; font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:clamp(2.6rem,6vw,3.8rem); line-height:1; color:var(--ambar); font-variant-numeric:tabular-nums; }
+.tablero-lista { margin:0; border-top:1px solid rgba(255,255,255,.15); }
+.tablero-lista div { display:flex; justify-content:space-between; padding:.4rem 0; border-bottom:1px solid rgba(255,255,255,.08); }
+.tablero-lista dd { margin:0; font-variant-numeric:tabular-nums; font-weight:500; color:#fff; }
+.tablero-total { margin-top:.8rem; border-top:0; }
+.tablero-total div { border-bottom:0; font-size:1.05rem; }
+.btn-cierre { display:block; text-align:center; margin-top:1.2rem; padding:.85rem; border:2px solid var(--ambar); border-radius:var(--r); color:var(--ambar); background:transparent; font-weight:700; font-size:1.05rem; width:100%; }
+.btn-cierre:hover { background:var(--ambar); color:var(--tablero); }
+.fondo { margin-top:1rem; font-size:.9rem; color:var(--tablero-tenue); }
+.fondo summary { cursor:pointer; }
+.fondo form { display:flex; gap:.5rem; margin-top:.5rem; }
+.fondo input { padding:.4rem .6rem; font-size:.95rem; background:#fff; color:#17202C; }
+.fondo button { white-space:nowrap; padding:.4rem .8rem; border:0; border-radius:var(--r); background:#DCE4EE; color:#12283F; font-weight:600; }
+
+.tabla-scroll { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:.95rem; }
+th, td { text-align:left; padding:.5rem .6rem; border-bottom:1px solid var(--linea); vertical-align:middle; }
+thead th { font-weight:600; color:var(--tenue); font-size:.88rem; border-bottom:2px solid var(--linea); }
+tfoot th { border-top:2px solid var(--tinta); border-bottom:0; }
+.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.fuerte { font-weight:600; }
+.acc { text-align:right; color:var(--tenue); font-size:.88rem; white-space:nowrap; }
+tr.anulada td, li.anulada span { color:var(--tenue); text-decoration:line-through; opacity:.75; }
+tr.anulada td.acc { text-decoration:none; }
+.chip { display:inline-block; padding:.1rem .5rem; border-radius:3px; font-size:.82rem; font-weight:600; color:#fff; }
+.chip-venta { background:var(--venta); } .chip-devolucion { background:var(--devol); }
+.chip-ingreso { background:var(--ingreso); } .chip-egreso { background:var(--egreso); }
+.vacio { color:var(--tenue); margin:.3rem 0; }
+.pie { color:var(--tenue); font-size:.9rem; margin:.5rem 0 0; }
+.ok { color:var(--ok); } .mal { color:var(--mal); }
+
+.encabezado { margin-bottom:1.25rem; }
+.encabezado p { margin:0; color:var(--tenue); }
+#importe[readonly] { background:var(--fondo); }
+.panel.pendientes h2 { color:var(--egreso, inherit); }
+.acciones-pdf { display:flex; gap:.5rem; flex-wrap:wrap; }
+.reporte-cab { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; }
+.dos-col { display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; }
+.cuenta td, .cuenta th { padding:.45rem .2rem; }
+.cuenta tr.total th { font-size:1.1rem; border-top:2px solid var(--tinta); border-bottom:0; }
+.cuenta tr.total.ok th { color:var(--ok); } .cuenta tr.total.mal th { color:var(--mal); }
+.arqueo { border:2px solid var(--tablero); }
+.arqueo-campos { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+.arqueo-calc { font-size:1.05rem; }
+.modal-fondo { position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; padding:1rem; z-index:50; }
+.modal { background:var(--papel); color:var(--tinta); border-radius:10px; padding:1.25rem; max-width:420px; width:100%; box-shadow:0 10px 30px rgba(0,0,0,.3); }
+.modal p { margin:0 0 1rem; font-size:1.05rem; }
+.modal-btns { display:flex; gap:.6rem; justify-content:flex-end; }
+.arqueo h3, .bloque h3 { margin:1.2rem 0 .4rem; font-size:1rem; }
+tr.subtotal th { font-weight:600; background:rgba(128,128,128,.12); }
+td.chk { text-align:center; font-size:1.1rem; }
+.arqueo .btn-cierre { background:var(--tablero); color:var(--ambar); border-color:var(--tablero); }
+.solo-print { display:none; }
+.firmas { display:flex; justify-content:space-around; margin-top:3.5rem; }
+.firmas span { border-top:1px solid var(--tinta); padding-top:.3rem; width:38%; text-align:center; color:var(--tenue); font-size:.9rem; }
+.renglones span { display:block; height:2rem; border-bottom:1px dotted var(--linea); }
+.detalle-boletos summary { cursor:pointer; color:var(--venta); font-weight:600; margin-bottom:.5rem; }
+
+.alta { display:flex; gap:.7rem; align-items:flex-end; flex-wrap:wrap; margin-top:1rem; padding-top:1rem; border-top:1px dashed var(--linea); }
+.alta .campo { margin:0; flex:1 1 150px; }
+.en-linea { display:flex; gap:.3rem; }
+.en-linea input, .en-linea select, td select { padding:.3rem .5rem; font-size:.9rem; }
+.en-linea input { max-width:130px; }
+td select { width:auto; }
+.lista { list-style:none; margin:0; padding:0; }
+.lista li { display:flex; justify-content:space-between; align-items:center; padding:.45rem 0; border-bottom:1px solid var(--linea); gap:1rem; }
+.lista .cod { font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:1.15rem; }
+.filtro { display:flex; gap:.6rem; align-items:center; margin-bottom:1rem; }
+.filtro select { width:auto; }
+
+.login { max-width:420px; margin:6vh auto 0; }
+.login-boleto { background:var(--tablero); color:#fff; padding:1.4rem 1.4rem 1.1rem; border-radius:var(--r) var(--r) 0 0; border-bottom:2px dashed var(--fondo); }
+.login-boleto h1 { margin:0; }
+.login-marca { margin:0 0 .3rem; color:var(--ambar); font-family:"Barlow Condensed",sans-serif; font-size:1.1rem; font-weight:600; }
+.login .panel { border-radius:0 0 var(--r) var(--r); border-top:0; }
+.credenciales { font-size:.9rem; color:var(--tenue); margin-top:1rem; }
+.credenciales table { font-size:.88rem; }
+.credenciales td { padding:.25rem .4rem; }
+.credenciales button { font-size:.85rem; }
+
+@media screen and (max-width:820px) {
+  main { padding:1rem; }
+  .caja-grid, .dos-col, .arqueo-campos { grid-template-columns:1fr; }
+  .tablero { order:-1; }
+  .tipos { grid-template-columns:repeat(2,1fr); }
+  .top { padding:.7rem 1rem; }
+}
+@media print {
+  @page { size:A4; margin:8mm; }
+  html, body { background:#fff !important; color:#000 !important; font-size:8.4pt; line-height:1.25; }
+  :root { --tinta:#000; --tenue:#444; --linea:#bbb; --papel:#fff; --fondo:#fff; }
+  .top, .demo-banda, .no-print, .aviso, .modal-fondo { display:none !important; }
+  main { padding:0 !important; max-width:none !important; margin:0 !important; }
+  h1 { font-size:12pt; margin:0; } .encabezado { margin-bottom:4pt; } .encabezado p { font-size:8pt; }
+  h2 { font-size:9.5pt; margin:0 0 2pt; } h3 { font-size:8.8pt !important; margin:5pt 0 2pt !important; }
+  .bloque { border:0 !important; padding:0 !important; margin:0 0 6pt !important; box-shadow:none !important; background:#fff !important; }
+  .dos-col { grid-template-columns:1fr 1fr !important; gap:10pt !important; }
+  table { font-size:7.4pt; line-height:1.1; } th, td { padding:.5pt 4pt !important; } thead th { font-size:7pt; }
+  .dos-col .bloque h2 { margin-bottom:1pt; } .bloque { margin-bottom:4pt !important; }
+  .cuenta tr.total th { font-size:8.8pt; } .pie, .vacio { font-size:7.6pt; margin:1pt 0; }
+  .tabla-scroll { overflow:visible; }
+  .detalle-boletos summary { display:none; } .detalle-boletos details > *:not(summary) { display:block; }
+  tr { break-inside:avoid; }
+  .solo-pantalla { display:none !important; } .solo-print { display:block !important; }
+  .split2 { display:grid; grid-template-columns:1fr 1fr; gap:8pt; align-items:start; }
+  .split2 table { font-size:7.2pt; } .split2 td, .split2 th { padding:.3pt 3pt !important; }
+  .tot-print { text-align:right; margin:2pt 0 0; font-size:8pt; }
+  .arq-grid table { font-size:7.4pt; }
+  .renglones span { height:11pt; } .firmas { margin-top:18pt; } .firmas span { color:#000; font-size:8pt; }
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(function () {
+  const TIPOS = [['venta','Venta'],['devolucion','Devolución'],['ingreso','Ingreso vario'],['egreso','Egreso vario']];
+  const TL = Object.fromEntries(TIPOS);
+  const GRUPOS = [['efectivo','Efectivo'],['tarjeta','Tarjetas (débito y crédito)'],['transferencia','Transferencia'],['otro','Otros']];
+  const GL = { tarjeta:'Tarjeta (pide cupón)', transferencia:'Transferencia', otro:'Otro' };
+  let S, U = null, view = 'caja', agSel = null, reporteId = null, histAg = 'todas';
+  let flash = null, last = { tipo:'venta', empresa:'', medio:'', subegreso:'comun', subingreso:'comun', pend:'' };
+  const pendCierre = {};
+
+  // ---------- datos (servidor) ----------
+  let ocupado = false, listo = false;
+  async function api(url, cuerpo) {
+    const op = cuerpo === undefined ? { credentials: 'same-origin' }
+      : { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) };
+    let r;
+    try { r = await fetch(url, op); } catch (e) { return { error: 'Sin conexión con el servidor. Revisá internet y probá de nuevo.' }; }
+    let d = {}; try { d = await r.json(); } catch (e) {}
+    if (r.status === 401 && d.error === 'sesion') { U = null; S = null; return { error: 'Tu sesión terminó. Ingresá de nuevo.', sesion: true }; }
+    if (!r.ok) return { error: d.error || 'Error del servidor.' };
+    return d;
+  }
+  function aplicar(d) { if (d.estado) { S = d.estado; U = d.usuario; } }
+  // manda una acción al servidor; al volver actualiza los datos y redibuja
+  function enviar(accion, datos, alTerminar) {
+    if (ocupado) return false;
+    ocupado = true; document.body.classList.add('ocupado');
+    api('/api/accion', Object.assign({ accion }, datos)).then(d => {
+      ocupado = false; document.body.classList.remove('ocupado');
+      if (d.error) msg('error', d.error); else { aplicar(d); if (alTerminar) alTerminar(d); }
+      render();
+    });
+    return false;
+  }
+  async function cargar() {
+    const d = await api('/api/estado');
+    if (!d.error) aplicar(d);
+    else if (!d.sesion) msg('error', d.error);
+    listo = true; render();
+  }
+
+  // ---------- utilidades ----------
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const p2 = n => String(n).padStart(2,'0');
+  function ahora() { const d = new Date(); return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`; }
+  const fecha = t => t ? `${t.slice(8,10)}/${t.slice(5,7)}/${t.slice(0,4)} ${t.slice(11,16)}` : '';
+  const hora = t => t ? t.slice(11,16) : '';
+  function pesos(v) { v = Math.round((v || 0) * 100) / 100; const s = Math.abs(v).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); return (v < 0 ? '−$ ' : '$ ') + s; }
+  function parseImporte(txt, cero) {
+    let s = String(txt || '').trim().replace(/[$\s]/g, '');
+    if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+    else if ((s.match(/\./g) || []).length > 1 || /^\d+\.\d{3}$/.test(s)) s = s.replace(/\./g, '');
+    if (!/^\d+(\.\d+)?$/.test(s)) return null;
+    const v = Math.round(parseFloat(s) * 100) / 100;
+    if (v < 0 || (v === 0 && !cero)) return null;
+    return v;
+  }
+  const ag = id => S.agencias.find(a => a.id === id);
+  const codAg = id => (ag(id) || {}).codigo || '—';
+  const usr = id => S.usuarios.find(u => u.id === id);
+  const nomUsr = id => (usr(id) || {}).nombre || '—';
+  const emp = id => S.empresas.find(e => e.id === id);
+  const med = id => S.medios.find(m => m.id === id);
+  const esMaster = () => U && U.rol === 'master';
+  function agenciaActual() {
+    if (!U) return null;
+    if (!esMaster()) return U.agenciaId;
+    const activas = S.agencias.filter(a => a.activa);
+    if (!activas.some(a => a.id === agSel)) agSel = activas.length ? activas[0].id : null;
+    return agSel;
+  }
+  function cajaAbierta(agId) {
+    return S.cajas.find(c => c.agenciaId === agId && c.estado === 'abierta') || { id: 0, agenciaId: agId, numero: '?', estado: 'abierta', fondo: 0, abiertaEn: '', abiertaPor: null };
+  }
+  const nombreCaja = c => `Caja ${codAg(c.agenciaId)}-${c.numero}`;
+
+  function resumen(c) {
+    const ops = S.ops.filter(o => o.cajaId === c.id);
+    const val = ops.filter(o => !o.anulada);
+    const medios = [], ventas = {}, devol = {}, porMedio = {}, vendedores = {}, ingresos = [], egresos = [], cupones = [];
+    const porGrupo = { efectivo:0, tarjeta:0, transferencia:0, otro:0 }, grEmp = {};
+    const transf = [];
+    const t = { ventas:0, devoluciones:0, ingresos:0, egresos:0, ventasEf:0, cantV:0, cantD:0 };
+    for (const o of val) {
+      const imp = o.importe;
+      if (o.tipo === 'venta' || o.tipo === 'devolucion') vendedores[o.usuarioId] = vendedores[o.usuarioId] || { ventas:0, cant:0, devol:0 };
+      const v = vendedores[o.usuarioId];
+      if (o.tipo === 'venta') {
+        const m = med(o.medioId), e = emp(o.empresaId).nombre;
+        if (!medios.includes(m.nombre)) medios.push(m.nombre);
+        ventas[e] = ventas[e] || {}; ventas[e][m.nombre] = (ventas[e][m.nombre] || 0) + imp;
+        grEmp[e] = grEmp[e] || { efectivo:0, tarjeta:0, transferencia:0, otro:0 }; grEmp[e][m.grupo] += imp; porGrupo[m.grupo] += imp;
+        if (m.grupo === 'tarjeta') cupones.push(o);
+        if (m.grupo === 'transferencia') transf.push(o);
+        porMedio[m.nombre] = (porMedio[m.nombre] || 0) + imp;
+        t.ventas += imp; t.cantV++; if (m.efectivo) t.ventasEf += imp;
+        v.ventas += imp; v.cant++;
+      } else if (o.tipo === 'devolucion') {
+        const e = emp(o.empresaId).nombre;
+        devol[e] = (devol[e] || 0) + imp; t.devoluciones += imp; t.cantD++; v.devol += imp;
+      } else if (o.tipo === 'ingreso') { ingresos.push(o); t.ingresos += imp; }
+      else { egresos.push(o); t.egresos += imp; }
+    }
+    const orden = [...S.medios].sort((a,b) => (b.efectivo - a.efectivo) || (a.id - b.id)).map(m => m.nombre);
+    medios.sort((a,b) => orden.indexOf(a) - orden.indexOf(b));
+    const empresas = [...new Set([...Object.keys(ventas), ...Object.keys(devol)])].sort().map(n => {
+      const vt = Object.values(ventas[n] || {}).reduce((a,b) => a+b, 0);
+      return { nombre:n, porMedio: ventas[n] || {}, grupos: grEmp[n] || { efectivo:0, tarjeta:0, transferencia:0, otro:0 }, ventas: vt, devol: devol[n] || 0, neto: vt - (devol[n] || 0) };
+    });
+    const esperado = Math.round((c.fondo + t.ventasEf - t.devoluciones + t.ingresos - t.egresos) * 100) / 100;
+    return { ops, medios, empresas, porMedio, porGrupo, cupones, transf, t, ingresos, egresos, vendedores, neto: t.ventas - t.devoluciones, esperado };
+  }
+
+  // ---------- vistas ----------
+  const $app = document.getElementById('app');
+  function aviso() { if (!flash) return ''; const h = `<p class="aviso aviso-${flash[0]}" role="status">${esc(flash[1])}</p>`; flash = null; return h; }
+  function msg(tipo, texto) { flash = [tipo, texto]; }
+
+  function render() {
+    if (!listo) { $app.innerHTML = '<main><p class="vacio">Cargando…</p></main>'; return; }
+    if (!U || !S) return renderLogin();
+    let inner = '';
+    if (view === 'caja') inner = vCaja();
+    else if (view === 'cierre') inner = vCierre();
+    else if (view === 'historial') inner = vHistorial();
+    else if (view === 'reporte') inner = vReporte();
+    else if (view === 'admin' && esMaster()) inner = vAdmin();
+    else { view = 'caja'; inner = vCaja(); }
+    const navBtn = (v, t) => `<button data-nav="${v}" ${view === v || (v === 'historial' && view === 'reporte') ? 'aria-current="page"' : ''}>${t}</button>`;
+    const agActivas = S.agencias.filter(a => a.activa);
+    const agUI = esMaster()
+      ? (agActivas.length ? `<label class="sr" for="selAg">Agencia</label><select id="selAg" data-change="agencia">${agActivas.map(a => `<option value="${a.id}" ${a.id === agenciaActual() ? 'selected' : ''}>Agencia ${esc(a.codigo)}</option>`).join('')}</select>` : '')
+      : `<span class="ag-chip">${esc(codAg(U.agenciaId))}</span>`;
+    $app.innerHTML = `
+      <header class="top">
+        <span class="marca">Caja de boletería</span>
+        <nav>${navBtn('caja','Caja')}${navBtn('cierre','Cierre')}${navBtn('historial','Historial')}${esMaster() ? navBtn('admin','Administración') : ''}</nav>
+        <div class="quien">${agUI}<span>${esc(U.nombre)}</span><button data-act="salir">Salir</button></div>
+      </header>
+      <main>${aviso()}${inner}</main>`;
+    despuesDeRender();
+  }
+
+  function renderLogin() {
+    $app.innerHTML = `
+      <main><section class="login">
+        <div class="login-boleto"><p class="login-marca">Caja de boletería</p><h1>Ingresá con tu usuario</h1></div>
+        <form class="panel" data-form="login">
+          ${aviso()}
+          <label class="campo">Usuario<input name="usuario" id="lu" autocomplete="username" required></label>
+          <label class="campo">Contraseña<input type="password" name="pass" id="lp" autocomplete="current-password" required></label>
+          <button class="btn-principal">Ingresar</button>
+        </form>
+      </section></main>`;
+    const lu = document.getElementById('lu'); if (lu) lu.focus();
+  }
+
+  function sinAgencia() { return `<section class="panel"><p class="vacio">No hay agencias activas. Creá una en Administración.</p></section>`; }
+
+  function vCaja() {
+    const agId = agenciaActual(); if (!agId) return sinAgencia();
+    const c = cajaAbierta(agId), r = resumen(c);
+    const empresas = S.empresas.filter(e => e.activa).sort((a,b) => a.nombre.localeCompare(b.nombre));
+    const medios = S.medios.filter(m => m.activo).sort((a,b) => (b.efectivo - a.efectivo) || (a.id - b.id));
+    const misPend = (S.pendientes || []).filter(p => p.agenciaId === agId);
+    const filas = [...r.ops].reverse().map(o => {
+      const det = (o.tipo === 'venta' || o.tipo === 'devolucion') ? esc(emp(o.empresaId).nombre) + (o.boleto ? ', boleto ' + esc(o.boleto) : '') + (o.tipo === 'venta' ? ', ' + esc(med(o.medioId).nombre) + (o.cupon ? ', cupón ' + esc(o.cupon) : '') : '') : esc(o.concepto);
+      const neg = o.tipo === 'devolucion' || o.tipo === 'egreso';
+      const puede = !o.anulada && (esMaster() || o.usuarioId === U.id);
+      return `<tr class="${o.anulada ? 'anulada' : ''}"><td>${hora(o.creado)}</td><td><span class="chip chip-${o.tipo}">${TL[o.tipo]}</span></td><td>${det}</td><td>${esc(nomUsr(o.usuarioId))}</td>
+        <td class="num">${pesos(neg ? -o.importe : o.importe)}</td>
+        <td class="acc">${o.anulada ? 'Anulada' : puede ? `<button class="btn-texto" data-act="anular" data-id="${o.id}">Anular</button>` : ''}</td></tr>`;
+    }).join('');
+    return `
+    <div class="caja-grid">
+      <form class="panel carga" data-form="op" id="form-op">
+        <h2>Cargar operación</h2>
+        ${empresas.length ? '' : `<p class="aviso aviso-error">No hay empresas cargadas. ${esMaster() ? 'Agregalas en Administración.' : 'Pedile al master que las agregue.'}</p>`}
+        <fieldset class="tipos"><legend class="sr">Tipo de operación</legend>
+          ${TIPOS.map(([t,l]) => `<label class="tipo tipo-${t}"><input type="radio" name="tipo" value="${t}" ${t === last.tipo ? 'checked' : ''}><span>${{ingreso:'Ingresos varios', egreso:'Egresos varios'}[t] || l}</span></label>`).join('')}
+        </fieldset>
+        <label class="campo" data-para="egreso egreso-pend">Tipo de egreso
+          <select name="subegreso" id="sel-subegreso"><option value="comun">Egreso común</option><option value="pendiente" ${last.subegreso === 'pendiente' ? 'selected' : ''}>Boleto pendiente de pago</option></select></label>
+        <label class="campo" data-para="ingreso ingreso-cobro">Tipo de ingreso
+          <select name="subingreso" id="sel-subingreso"><option value="comun">Ingreso común</option><option value="cobro" ${misPend.length ? '' : 'disabled'} ${last.subingreso === 'cobro' && misPend.length ? 'selected' : ''}>Cobro de boleto pendiente${misPend.length ? ` (${misPend.length})` : ' (no tenés)'}</option></select></label>
+        <label class="campo" data-para="ingreso-cobro">Boleto pendiente
+          <select name="pendiente" id="sel-pend" required>${misPend.map(p => `<option value="${p.id}" data-importe="${p.importe}" ${String(p.id) === String(last.pend) ? 'selected' : ''}>${esc((emp(p.empresaId) || {}).nombre || '—')} · boleto ${esc(p.boleto)} · ${pesos(p.importe)}</option>`).join('')}</select></label>
+        <label class="campo" data-para="venta devolucion egreso-pend">Empresa
+          <select name="empresa" required><option value="">Elegí la empresa</option>
+          ${empresas.map(e => `<option value="${e.id}" ${String(e.id) === String(last.empresa) ? 'selected' : ''}>${esc(e.nombre)}</option>`).join('')}</select></label>
+        <label class="campo" data-para="venta devolucion egreso-pend">Número de boleto<input name="boleto" maxlength="30" autocomplete="off" required></label>
+        <label class="campo" data-para="venta">Modo de pago
+          <select name="medio" id="sel-medio" required>${medios.map(m => `<option value="${m.id}" data-grupo="${m.grupo}" ${String(m.id) === String(last.medio) ? 'selected' : ''}>${esc(m.nombre)}</option>`).join('')}</select></label>
+        <label class="campo" id="campo-cupon">Número de cupón<input name="cupon" inputmode="numeric" maxlength="20" autocomplete="off" required></label>
+        <p class="nota" data-para="devolucion">Las devoluciones salen siempre en efectivo.</p>
+        <label class="campo" data-para="ingreso egreso">Concepto<input name="concepto" maxlength="120" placeholder="Ej.: cambio, retiro, compra de insumos" required></label>
+        <label class="campo">Importe<input name="importe" id="importe" inputmode="decimal" autocomplete="off" placeholder="0,00" required></label>
+        <button class="btn-principal" id="btn-reg">Registrar venta</button>
+      </form>
+      <section class="tablero" aria-label="Estado de la caja">
+        <p class="tablero-cab">${nombreCaja(c)}, abierta el ${fecha(c.abiertaEn)}</p>
+        <p class="tablero-rotulo">Efectivo en caja</p>
+        <p class="tablero-monto">${pesos(r.esperado)}</p>
+        <dl class="tablero-lista">
+          <div><dt>Fondo inicial</dt><dd>${pesos(c.fondo)}</dd></div>
+          <div><dt>Ventas en efectivo</dt><dd>${pesos(r.t.ventasEf)}</dd></div>
+          <div><dt>Devoluciones</dt><dd>${pesos(-r.t.devoluciones)}</dd></div>
+          <div><dt>Ingresos varios</dt><dd>${pesos(r.t.ingresos)}</dd></div>
+          <div><dt>Egresos varios</dt><dd>${pesos(-r.t.egresos)}</dd></div>
+        </dl>
+        <dl class="tablero-lista tablero-total"><div><dt>Ventas totales (${r.t.cantV})</dt><dd>${pesos(r.t.ventas)}</dd></div>
+          <div><dt>Tarjetas</dt><dd>${pesos(r.porGrupo.tarjeta)}</dd></div><div><dt>Transferencias</dt><dd>${pesos(r.porGrupo.transferencia)}</dd></div></dl>
+        <button class="btn-cierre" data-nav="cierre">Hacer cierre de caja</button>
+        ${esMaster() ? `<details class="fondo"><summary>Ajustar fondo inicial</summary>
+          <form data-form="fondo"><input name="fondo" inputmode="decimal" value="${c.fondo.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}" aria-label="Fondo inicial"><button>Guardar fondo</button></form></details>` : ''}
+      </section>
+    </div>
+    ${misPend.length ? `<section class="panel pendientes"><h2>Mis boletos pendientes de pago</h2>${tablaPend(misPend, true)}</section>` : ''}
+    <section class="panel"><h2>Operaciones de esta caja</h2>
+      ${r.ops.length ? `<div class="tabla-scroll"><table><thead><tr><th>Hora</th><th>Tipo</th><th>Detalle</th><th>Vendedor</th><th class="num">Importe</th><th></th></tr></thead><tbody>${filas}</tbody></table></div>`
+        : '<p class="vacio">Todavía no hay operaciones. Cargá la primera venta con el formulario de arriba.</p>'}
+    </section>`;
+  }
+
+  function tablaPend(lista, conBoton) {
+    if (!lista.length) return '<p class="vacio">No tenés boletos pendientes de pago.</p>';
+    const tot = lista.reduce((a, p) => a + p.importe, 0);
+    return `<div class="tabla-scroll"><table><thead><tr><th>Fecha</th>${esMaster() ? '<th>Agencia</th>' : ''}<th>Empresa</th><th>Boleto</th><th class="num">Importe</th>${conBoton ? '<th></th>' : ''}</tr></thead><tbody>
+      ${lista.map(p => `<tr><td>${fecha(p.creado)}</td>${esMaster() ? `<td>${esc(codAg(p.agenciaId))}</td>` : ''}<td>${esc((emp(p.empresaId) || {}).nombre || '—')}</td><td>${esc(p.boleto)}</td><td class="num">${pesos(p.importe)}</td>${conBoton ? `<td class="acc"><button class="btn-texto" data-act="cobrarpend" data-id="${p.id}">Cobrar</button></td>` : ''}</tr>`).join('')}</tbody>
+      <tfoot><tr class="total"><th colspan="${esMaster() ? 4 : 3}">Total pendiente (${lista.length})</th><th class="num">${pesos(tot)}</th>${conBoton ? '<th></th>' : ''}</tr></tfoot></table></div>`;
+  }
+  // pendientes que se muestran en el cierre: los del usuario que mira, de esa agencia
+  const pendDeCaja = c => c.estado === 'abierta' ? (S.pendientes || []).filter(p => p.agenciaId === c.agenciaId) : (pendCierre[c.id] || []);
+
+  function vResumen(c, r, abierto = false) {
+    const grs = GRUPOS.filter(([g]) => g !== 'otro' || r.porGrupo.otro > 0);
+    const cup = r.cupones.length ? `<div class="tabla-scroll"><table><thead><tr><th>Hora</th><th>Empresa</th><th>Boleto</th><th>Tarjeta</th><th>Cupón</th><th>Vendedor</th><th class="num">Importe</th></tr></thead><tbody>
+      ${r.cupones.map(o => `<tr><td>${hora(o.creado)}</td><td>${esc(emp(o.empresaId).nombre)}</td><td>${esc(o.boleto || '—')}</td><td>${esc(med(o.medioId).nombre)}</td><td>${esc(o.cupon || '—')}</td><td>${esc(nomUsr(o.usuarioId))}</td><td class="num">${pesos(o.importe)}</td></tr>`).join('')}</tbody>
+      <tfoot><tr><th colspan="6">Total tarjetas</th><th class="num">${pesos(r.porGrupo.tarjeta)}</th></tr></tfoot></table></div>` : '<p class="vacio">Sin ventas con tarjeta.</p>';
+    const bol = r.ops.filter(o => !o.anulada && (o.tipo === 'venta' || o.tipo === 'devolucion'));
+    // versiones compactas en dos columnas, solo para imprimir
+    const dosCol = (rows, head, pie = '') => { const m = Math.ceil(rows.length / 2), t = x => `<table><thead><tr>${head}</tr></thead><tbody>${x.join('')}</tbody></table>`;
+      return `<div class="solo-print"><div class="split2">${t(rows.slice(0, m))}${t(rows.slice(m))}</div>${pie}</div>`; };
+    const cupP = r.cupones.length ? dosCol(r.cupones.map(o => `<tr><td>${esc(o.boleto || '—')}</td><td>${esc(emp(o.empresaId).nombre)}</td><td>${esc(med(o.medioId).nombre)}</td><td>${esc(o.cupon || '—')}</td><td class="num">${pesos(o.importe)}</td></tr>`),
+      '<th>Boleto</th><th>Empresa</th><th>Tarjeta</th><th>Cupón</th><th class="num">Importe</th>', `<p class="tot-print">Total tarjetas (${r.cupones.length}): <strong>${pesos(r.porGrupo.tarjeta)}</strong></p>`) : '';
+    const detP = bol.length ? dosCol(bol.map(o => `<tr><td>${esc(o.boleto || '—')}${o.tipo === 'devolucion' ? ' <em>dev.</em>' : ''}</td><td>${esc(emp(o.empresaId).nombre)}</td><td>${esc(med(o.medioId).nombre)}</td><td>${esc(o.cupon || '')}</td><td class="num">${pesos(o.tipo === 'devolucion' ? -o.importe : o.importe)}</td></tr>`),
+      '<th>Boleto</th><th>Empresa</th><th>Pago</th><th>Cupón</th><th class="num">Importe</th>', `<p class="tot-print">${bol.length} boletos. Neto: <strong>${pesos(r.neto)}</strong></p>`) : '';
+    const det = bol.length ? `<details ${abierto ? 'open' : ''}><summary>Ver ${bol.length} operaciones con boleto</summary><div class="tabla-scroll"><table><thead><tr><th>Hora</th><th>Tipo</th><th>Boleto</th><th>Empresa</th><th>Pago</th><th>Cupón</th><th>Vendedor</th><th class="num">Importe</th></tr></thead><tbody>
+      ${bol.map(o => `<tr><td>${hora(o.creado)}</td><td>${TL[o.tipo]}</td><td>${esc(o.boleto || '—')}</td><td>${esc(emp(o.empresaId).nombre)}</td><td>${esc(med(o.medioId).nombre)}</td><td>${esc(o.cupon || '')}</td><td>${esc(nomUsr(o.usuarioId))}</td><td class="num">${pesos(o.tipo === 'devolucion' ? -o.importe : o.importe)}</td></tr>`).join('')}</tbody></table></div></details>` : '<p class="vacio">Sin boletos en esta caja.</p>';
+    const tabla = r.empresas.length ? `
+      <div class="tabla-scroll"><table>
+        <thead><tr><th>Empresa</th>${grs.map(([g,l]) => `<th class="num">${l}</th>`).join('')}<th class="num">Total ventas</th><th class="num">Devoluciones</th><th class="num">Neto</th></tr></thead>
+        <tbody>${r.empresas.map(e => `<tr><td>${esc(e.nombre)}</td>${grs.map(([g]) => `<td class="num">${pesos(e.grupos[g])}</td>`).join('')}
+          <td class="num fuerte">${pesos(e.ventas)}</td><td class="num">${pesos(-e.devol)}</td><td class="num fuerte">${pesos(e.neto)}</td></tr>`).join('')}</tbody>
+        <tfoot><tr><th>Total</th>${grs.map(([g]) => `<th class="num">${pesos(r.porGrupo[g])}</th>`).join('')}<th class="num">${pesos(r.t.ventas)}</th><th class="num">${pesos(-r.t.devoluciones)}</th><th class="num">${pesos(r.neto)}</th></tr></tfoot>
+      </table></div><p class="pie">${r.t.cantV} ventas y ${r.t.cantD} devoluciones.</p>` : '<p class="vacio">Sin ventas ni devoluciones en esta caja.</p>';
+    const lista = (arr, tot, vacio) => arr.length ? `<table><tbody>${arr.map(o => `<tr><td>${hora(o.creado)}</td><td>${esc(o.concepto)}</td><td class="num">${pesos(o.importe)}</td></tr>`).join('')}</tbody>
+      <tfoot><tr><th colspan="2">Total</th><th class="num">${pesos(tot)}</th></tr></tfoot></table>` : `<p class="vacio">${vacio}</p>`;
+    const vend = Object.entries(r.vendedores);
+    return `
+      <section class="bloque"><h2>Ventas por empresa y modo de pago</h2>${tabla}</section>
+      <section class="bloque"><h2>Cupones de tarjeta</h2><div class="solo-pantalla">${cup}</div>${cupP}</section>
+      <section class="bloque detalle-boletos"><h2>Detalle de boletos</h2><div class="solo-pantalla">${det}</div>${detP}</section>
+      <div class="dos-col">
+        <section class="bloque"><h2>Ingresos varios</h2>${lista(r.ingresos, r.t.ingresos, 'Sin ingresos varios.')}</section>
+        <section class="bloque"><h2>Egresos varios</h2>${lista(r.egresos, r.t.egresos, 'Sin egresos varios.')}</section>
+      </div>
+      <section class="bloque"><h2>Mis boletos pendientes de pago</h2>${tablaPend(pendDeCaja(c), false)}</section>
+      <div class="dos-col">
+        <section class="bloque"><h2>Efectivo</h2><table class="cuenta">
+          <tr><td>Fondo inicial</td><td class="num">${pesos(c.fondo)}</td></tr>
+          <tr><td>Ventas en efectivo</td><td class="num">${pesos(r.t.ventasEf)}</td></tr>
+          <tr><td>Devoluciones</td><td class="num">${pesos(-r.t.devoluciones)}</td></tr>
+          <tr><td>Ingresos varios</td><td class="num">${pesos(r.t.ingresos)}</td></tr>
+          <tr><td>Egresos varios</td><td class="num">${pesos(-r.t.egresos)}</td></tr>
+          <tr class="total"><th>Efectivo total en caja</th><th class="num">${pesos(r.esperado)}</th></tr></table></section>
+        <section class="bloque"><h2>Por vendedor</h2>${vend.length ? `<table><thead><tr><th>Vendedor</th><th class="num">Ventas</th><th class="num">Monto</th><th class="num">Devol.</th></tr></thead><tbody>
+          ${vend.map(([id, v]) => `<tr><td>${esc(nomUsr(Number(id)))}</td><td class="num">${v.cant}</td><td class="num">${pesos(v.ventas)}</td><td class="num">${pesos(-v.devol)}</td></tr>`).join('')}</tbody></table>` : '<p class="vacio">Sin operaciones.</p>'}</section>
+      </div>`;
+  }
+
+  function tablaTransf(r, partir = true) {
+    if (!r.transf.length) return '<p class="vacio">Sin transferencias en esta caja.</p>';
+    const g = {}; r.transf.forEach(o => { const e = emp(o.empresaId).nombre; (g[e] = g[e] || []).push(o); });
+    const filas = Object.keys(g).sort().map(e => {
+      const sub = g[e].reduce((a,o) => a + o.importe, 0);
+      return g[e].map(o => `<tr><td>${esc(e)}</td><td>${hora(o.creado)}</td><td>${esc(o.boleto || '—')}</td><td>${esc(med(o.medioId).nombre)}</td><td>${esc(nomUsr(o.usuarioId))}</td><td class="num">${pesos(o.importe)}</td><td class="chk">☐</td></tr>`).join('')
+        + `<tr class="subtotal"><th colspan="5">Total ${esc(e)} (${g[e].length})</th><th class="num">${pesos(sub)}</th><th></th></tr>`;
+    }).join('');
+    const tot = r.transf.reduce((a,o) => a + o.importe, 0);
+    const pr = []; Object.keys(g).sort().forEach(e => {
+      g[e].forEach(o => pr.push(`<tr><td>${esc(e)}</td><td>${esc(o.boleto || '—')}</td><td class="num">${pesos(o.importe)}</td><td class="chk">☐</td></tr>`));
+      pr.push(`<tr class="subtotal"><th colspan="2">Total ${esc(e)} (${g[e].length})</th><th class="num">${pesos(g[e].reduce((a,o) => a + o.importe, 0))}</th><th></th></tr>`); });
+    const m = Math.ceil(pr.length / 2), tb = x => `<table><thead><tr><th>Empresa</th><th>Boleto</th><th class="num">Importe</th><th>OK</th></tr></thead><tbody>${x.join('')}</tbody></table>`;
+    const impresa = `<div class="solo-print">${partir ? `<div class="split2">${tb(pr.slice(0, m))}${tb(pr.slice(m))}</div>` : tb(pr)}<p class="tot-print">Total transferencias (${r.transf.length}): <strong>${pesos(tot)}</strong></p></div>`;
+    return impresa + `<div class="solo-pantalla"><p class="pie">Controlá cada transferencia contra la copia del comprobante y marcá el casillero.</p>
+      <div class="tabla-scroll"><table><thead><tr><th>Empresa</th><th>Hora</th><th>Boleto</th><th>Medio</th><th>Vendedor</th><th class="num">Importe</th><th>OK</th></tr></thead>
+      <tbody>${filas}</tbody><tfoot><tr class="total"><th colspan="5">Total transferencias (${r.transf.length})</th><th class="num">${pesos(tot)}</th><th></th></tr></tfoot></table></div></div>`;
+  }
+
+  function vCierre() {
+    const agId = agenciaActual(); if (!agId) return sinAgencia();
+    const c = cajaAbierta(agId), r = resumen(c);
+    return `
+      <header class="encabezado"><h1>Cierre de la ${nombreCaja(c).toLowerCase()}</h1>
+        <p>Abierta el ${fecha(c.abiertaEn)}. Revisá el resumen, contá el efectivo y confirmá el cierre.</p></header>
+      ${vResumen(c, r)}
+      <form class="panel arqueo" data-form="cierre">
+        <h2>Arqueo</h2>
+        <p>Efectivo que debería haber: <strong>${pesos(r.esperado)}</strong></p>
+        <div class="arqueo-campos">
+          <label class="campo">Efectivo contado<input name="contado" id="contado" inputmode="decimal" required placeholder="0,00"></label>
+          <label class="campo">Fondo que queda para la próxima caja<input name="fondoSig" id="fondoSig" inputmode="decimal" value="0" placeholder="0,00"></label>
+        </div>
+        <h3>Transferencias por empresa</h3>${tablaTransf(r)}
+        <p class="arqueo-calc" data-esperado="${r.esperado}" id="calc">Diferencia: <strong id="dif">—</strong>. A rendir: <strong id="rendir">—</strong></p>
+        <label class="campo">Observaciones<textarea name="obs" rows="2" maxlength="500"></textarea></label>
+        <button class="btn-cierre">Cerrar caja y abrir una nueva</button>
+      </form>`;
+  }
+
+  function vHistorial() {
+    let cajas = S.cajas.filter(c => c.estado === 'cerrada');
+    if (!esMaster()) cajas = cajas.filter(c => c.agenciaId === U.agenciaId);
+    else if (histAg !== 'todas') cajas = cajas.filter(c => c.agenciaId === Number(histAg));
+    cajas.sort((a,b) => b.cerradaEn.localeCompare(a.cerradaEn));
+    const filtro = esMaster() ? `<div class="filtro"><label for="fh">Agencia</label><select id="fh" data-change="histag"><option value="todas">Todas</option>
+      ${S.agencias.map(a => `<option value="${a.id}" ${String(a.id) === histAg ? 'selected' : ''}>${esc(a.codigo)}</option>`).join('')}</select></div>` : '';
+    const filas = cajas.map(c => { return `<tr>
+      <td><button class="btn-texto" data-act="ver" data-id="${c.id}">${nombreCaja(c)}</button></td>
+      <td>${fecha(c.cerradaEn)}</td><td>${esc(nomUsr(c.cerradaPor))}</td>
+      <td class="num">${pesos(c.totVentas)}</td><td class="num">${pesos(-c.totDevol)}</td>
+      <td class="num">${pesos(c.esperado)}</td><td class="num ${Math.abs(c.dif) < .005 ? 'ok' : 'mal'}">${pesos(c.dif)}</td></tr>`; }).join('');
+    return `<header class="encabezado"><h1>Cierres anteriores</h1></header>${filtro}
+      <section class="panel">${cajas.length ? `<div class="tabla-scroll"><table><thead><tr><th>Caja</th><th>Cierre</th><th>Cerró</th><th class="num">Ventas</th><th class="num">Devoluciones</th><th class="num">Efectivo esperado</th><th class="num">Diferencia</th></tr></thead><tbody>${filas}</tbody></table></div>`
+        : '<p class="vacio">Todavía no hay cajas cerradas.</p>'}</section>`;
+  }
+
+  function vReporte() {
+    const c = S.cajas.find(x => x.id === reporteId && x.estado === 'cerrada');
+    if (!c || (!esMaster() && c.agenciaId !== U.agenciaId)) { view = 'historial'; return vHistorial(); }
+    const r = resumen(c);
+    const difLabel = c.dif > .004 ? 'Sobrante' : c.dif < -.004 ? 'Faltante' : 'Diferencia';
+    return `
+      <header class="encabezado reporte-cab"><div><h1>Cierre de ${nombreCaja(c).toLowerCase()}</h1>
+        <p>Abierta el ${fecha(c.abiertaEn)} por ${esc(nomUsr(c.abiertaPor))}. Cerrada el ${fecha(c.cerradaEn)} por ${esc(nomUsr(c.cerradaPor))}.</p></div>
+        <div class="no-print acciones-pdf"><button class="btn-secundario" data-act="pdf" data-modo="guardar">Guardar PDF</button><button class="btn-secundario" data-act="pdf" data-modo="imprimir">Imprimir</button></div></header>
+      ${vResumen(c, r, true)}
+      <section class="bloque"><div class="dos-col arq-grid"><div><h2>Arqueo</h2><table class="cuenta">
+        <tr><td>Efectivo esperado</td><td class="num">${pesos(c.esperado)}</td></tr>
+        <tr><td>Efectivo contado</td><td class="num">${pesos(c.contado)}</td></tr>
+        <tr class="total ${Math.abs(c.dif) < .005 ? 'ok' : 'mal'}"><th>${difLabel}</th><th class="num">${pesos(Math.abs(c.dif))}</th></tr>
+        <tr><td>Fondo que quedó para la próxima caja</td><td class="num">${pesos(c.fondoSig)}</td></tr>
+        <tr class="total"><th>Efectivo a rendir</th><th class="num">${pesos(c.contado - c.fondoSig)}</th></tr></table>
+        ${c.obs ? `<p>Observaciones del cierre: ${esc(c.obs)}</p>` : ''}</div>
+        <div><h2>Transferencias por empresa</h2>${tablaTransf(r, false)}</div></div></section>
+      <section class="bloque espacio-final"><h2>Observaciones</h2><div class="renglones"><span></span><span></span><span></span><span></span></div>
+        <div class="firmas"><span>Firma vendedor</span><span>Firma responsable</span></div></section>`;
+  }
+
+  function vAdmin() {
+    const agOpts = sel => S.agencias.map(a => `<option value="${a.id}" ${a.id === sel ? 'selected' : ''} ${!a.activa ? 'disabled' : ''}>${esc(a.codigo)}${a.activa ? '' : ' (inactiva)'}</option>`).join('');
+    const usuarios = [...S.usuarios].sort((a,b) => (b.rol === 'master') - (a.rol === 'master') || (b.activo - a.activo) || a.nombre.localeCompare(b.nombre));
+    return `
+      <header class="encabezado"><h1>Administración</h1></header>
+      <section class="panel"><h2>Usuarios</h2>
+        <div class="tabla-scroll"><table>
+          <thead><tr><th>Nombre</th><th>Usuario</th><th>Agencia</th><th>Estado</th><th>Contraseña</th><th></th></tr></thead>
+          <tbody>${usuarios.map(u => `<tr class="${u.activo ? '' : 'anulada'}">
+            <td>${esc(u.nombre)}</td><td>${esc(u.usuario)}</td>
+            <td>${u.rol === 'master' ? 'Master (todas)' : `<select data-change="usrag" data-id="${u.id}" aria-label="Agencia de ${esc(u.nombre)}">${agOpts(u.agenciaId)}</select>`}</td>
+            <td>${u.activo ? 'Activo' : 'Inactivo'}</td>
+            <td><form class="en-linea" data-form="pass" data-id="${u.id}"><input type="password" name="pass" placeholder="Nueva" aria-label="Nueva contraseña de ${esc(u.nombre)}" required><button class="btn-texto">Guardar</button></form></td>
+            <td class="acc">${u.rol === 'master' ? '' : `<button class="btn-texto" data-act="togusr" data-id="${u.id}">${u.activo ? 'Desactivar' : 'Activar'}</button>`}</td></tr>`).join('')}</tbody>
+        </table></div>
+        <form class="alta" data-form="nuevousr">
+          <label class="campo">Nombre<input name="nombre" required></label>
+          <label class="campo">Usuario<input name="usuario" required autocomplete="off"></label>
+          <label class="campo">Contraseña<input type="password" name="pass" required autocomplete="new-password"></label>
+          <label class="campo">Agencia<select name="agencia" required><option value="">Elegí</option>${agOpts(null)}</select></label>
+          <button class="btn-secundario">Crear usuario</button>
+        </form>
+      </section>
+      <section class="panel"><h2>Agencias</h2>
+        <ul class="lista">${S.agencias.map(a => { const n = S.usuarios.filter(u => u.agenciaId === a.id && u.activo).length; return `<li class="${a.activa ? '' : 'anulada'}">
+          <span><span class="cod">${esc(a.codigo)}</span> ${n} vendedor${n === 1 ? '' : 'es'} activo${n === 1 ? '' : 's'}</span>
+          <button class="btn-texto" data-act="togag" data-id="${a.id}">${a.activa ? 'Desactivar' : 'Activar'}</button></li>`; }).join('')}</ul>
+        <form class="alta" data-form="nuevaag"><label class="campo">Código de agencia nueva<input name="codigo" maxlength="12" required placeholder="Ej.: B30"></label><button class="btn-secundario">Agregar agencia</button></form>
+      </section>
+      <div class="dos-col">
+        <section class="panel"><h2>Empresas</h2>
+          <ul class="lista">${S.empresas.map(e => `<li class="${e.activa ? '' : 'anulada'}"><span>${esc(e.nombre)}</span><button class="btn-texto" data-act="togemp" data-id="${e.id}">${e.activa ? 'Desactivar' : 'Activar'}</button></li>`).join('') || '<li class="vacio">Agregá las empresas que vendés.</li>'}</ul>
+          <form class="alta" data-form="nuevaemp"><label class="campo">Nueva empresa<input name="nombre" required></label><button class="btn-secundario">Agregar empresa</button></form>
+        </section>
+        <section class="panel"><h2>Modos de pago</h2>
+          <ul class="lista">${S.medios.map(m => `<li class="${m.activo ? '' : 'anulada'}"><span>${esc(m.nombre)} <span class="pie">${m.efectivo ? '(cuenta para el arqueo)' : '(' + GL[m.grupo] + ')'}</span></span>${m.efectivo ? '' : `<button class="btn-texto" data-act="togmed" data-id="${m.id}">${m.activo ? 'Desactivar' : 'Activar'}</button>`}</li>`).join('')}</ul>
+          <form class="alta" data-form="nuevomed"><label class="campo">Nuevo modo de pago<input name="nombre" required></label>
+            <label class="campo">Se suma en<select name="grupo"><option value="tarjeta">Tarjetas (pide cupón)</option><option value="transferencia">Transferencia</option><option value="otro">Otros</option></select></label><button class="btn-secundario">Agregar modo</button></form>
+        </section>
+      </div>`;
+  }
+
+  function despuesDeRender() {
+    const f = document.getElementById('form-op');
+    if (f) { aplicarTipo(f); const i = document.getElementById('importe'); if (i) i.focus(); }
+  }
+  function aplicarTipo(f) {
+    const tipo = f.querySelector('input[name=tipo]:checked').value;
+    const se = document.getElementById('sel-subegreso'), si = document.getElementById('sel-subingreso');
+    let k = tipo;
+    if (tipo === 'egreso' && se && se.value === 'pendiente') k = 'egreso-pend';
+    if (tipo === 'ingreso' && si && si.value === 'cobro') k = 'ingreso-cobro';
+    f.querySelectorAll('[data-para]').forEach(el => {
+      const ks = el.dataset.para.split(' ');
+      const vis = ks.includes(k) || (k !== tipo && ks.includes(tipo) && el.querySelector('#sel-subegreso, #sel-subingreso'));
+      el.hidden = !vis; el.querySelectorAll('input,select').forEach(i => i.disabled = !vis);
+    });
+    const cc = document.getElementById('campo-cupon'), sm = document.getElementById('sel-medio');
+    const esTarjeta = tipo === 'venta' && sm && sm.selectedOptions[0] && sm.selectedOptions[0].dataset.grupo === 'tarjeta';
+    cc.hidden = !esTarjeta; cc.querySelector('input').disabled = !esTarjeta;
+    f.dataset.tipo = tipo;
+    const imp = document.getElementById('importe'), sp = document.getElementById('sel-pend');
+    if (k === 'ingreso-cobro' && sp && sp.selectedOptions[0]) {
+      imp.value = Number(sp.selectedOptions[0].dataset.importe).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      imp.readOnly = true; imp.dataset.auto = '1';
+    } else if (imp.dataset.auto) { imp.value = ''; imp.readOnly = false; delete imp.dataset.auto; }
+    document.getElementById('btn-reg').textContent = { venta:'Registrar venta', devolucion:'Registrar devolución', ingreso:'Registrar ingreso', egreso:'Registrar egreso', 'egreso-pend':'Registrar boleto pendiente', 'ingreso-cobro':'Registrar cobro del boleto' }[k];
+  }
+
+  // ---------- acciones ----------
+  const forms = {
+    login(fd) {
+      if (ocupado) return false; ocupado = true;
+      api('/api/login', { usuario: String(fd.get('usuario') || '').trim(), pass: String(fd.get('pass') || '') }).then(d => {
+        ocupado = false;
+        if (d.error) msg('error', d.error); else { aplicar(d); view = 'caja'; agSel = null; }
+        render();
+      });
+      return false;
+    },
+    op(fd) {
+      const tipo = fd.get('tipo'); last.tipo = tipo;
+      const importe = parseImporte(fd.get('importe'));
+      if (importe === null) return msg('error', 'Importe inválido. Usá números, por ejemplo 15000 o 15.000,50.');
+      let empresaId = null, medioId = null, concepto = null;
+      const sub = tipo === 'egreso' ? fd.get('subegreso') : tipo === 'ingreso' ? fd.get('subingreso') : null;
+      if (tipo === 'egreso') last.subegreso = sub; if (tipo === 'ingreso') last.subingreso = sub;
+      if (tipo === 'egreso' && sub === 'pendiente') {
+        empresaId = Number(fd.get('empresa')); if (!emp(empresaId)) return msg('error', 'Elegí la empresa del boleto pendiente.');
+        const boleto = String(fd.get('boleto') || '').trim(); if (!boleto) return msg('error', 'Cargá el número de boleto pendiente.');
+        last.empresa = empresaId;
+        return enviar('op', { tipo, subtipo: 'pendiente', empresaId, boleto, importe, agenciaId: agenciaActual() },
+          () => { msg('ok', `Boleto ${boleto} anotado como pendiente de pago: ${pesos(importe)}`); last.subegreso = 'comun'; });
+      }
+      if (tipo === 'ingreso' && sub === 'cobro') {
+        const p = (S.pendientes || []).find(x => x.id === Number(fd.get('pendiente'))); if (!p) return msg('error', 'Elegí el boleto pendiente que se cobra.');
+        return enviar('op', { tipo, subtipo: 'cobro', pendienteId: p.id, agenciaId: agenciaActual() },
+          () => { msg('ok', `Cobro del boleto ${p.boleto} registrado: ${pesos(p.importe)}`); last.subingreso = 'comun'; last.pend = ''; });
+      }
+      if (tipo === 'venta' || tipo === 'devolucion') { empresaId = Number(fd.get('empresa')); if (!emp(empresaId)) return msg('error', 'Elegí la empresa.'); last.empresa = empresaId; }
+      if (tipo === 'venta') { medioId = Number(fd.get('medio')); if (!med(medioId)) return msg('error', 'Elegí el modo de pago.'); last.medio = medioId; }
+      let cupon = null, boleto = null;
+      if (tipo === 'venta' || tipo === 'devolucion') { boleto = String(fd.get('boleto') || '').trim(); if (!boleto) return msg('error', 'Cargá el número de boleto.'); }
+      if (tipo === 'venta' && med(medioId).grupo === 'tarjeta') { cupon = String(fd.get('cupon') || '').trim(); if (!cupon) return msg('error', 'Cargá el número de cupón de la tarjeta.'); }
+      if (tipo === 'ingreso' || tipo === 'egreso') { concepto = String(fd.get('concepto') || '').trim(); if (!concepto) return msg('error', 'Escribí el concepto del movimiento.'); }
+      return enviar('op', { tipo, empresaId, medioId, concepto, boleto, cupon, importe, agenciaId: agenciaActual() },
+        () => msg('ok', `${TL[tipo]} registrada: ${pesos(importe)}`));
+    },
+    fondo(fd) {
+      const v = parseImporte(fd.get('fondo'), true); if (v === null) return msg('error', 'Fondo inválido.');
+      return enviar('fondo', { fondo: v, agenciaId: agenciaActual() }, () => msg('ok', 'Fondo inicial actualizado.'));
+    },
+    cierre(fd) {
+      const contado = parseImporte(fd.get('contado'), true), fondoSig = parseImporte(fd.get('fondoSig') || '0', true);
+      if (contado === null || fondoSig === null) return msg('error', 'Revisá los importes del arqueo.');
+      if (fondoSig > contado) return msg('error', 'El fondo que queda no puede ser mayor que el efectivo contado.');
+      const c = cajaAbierta(agenciaActual());
+      return pedir(`¿Cerrar ${nombreCaja(c)}? Se abre una caja nueva y no se pueden cargar más operaciones en esta.`, () => {
+        enviar('cierre', { agenciaId: agenciaActual(), cajaId: c.id, contado, fondoSig, obs: String(fd.get('obs') || '').trim() }, d => {
+          S.ops = S.ops.filter(o => o.cajaId !== d.cajaId).concat(d.opsCaja); pendCierre[d.cajaId] = d.pendCaja || [];
+          msg('ok', `${nombreCaja(c)} cerrada. Se abrió la caja ${codAg(c.agenciaId)}-${d.numeroNuevo} con fondo de ${pesos(fondoSig)}.`);
+          reporteId = d.cajaId; view = 'reporte';
+        });
+      }, 'Cerrar caja');
+    },
+    pass(fd, f) {
+      const u = usr(Number(f.dataset.id)), p = String(fd.get('pass') || '');
+      if (p.length < 4) return msg('error', 'La contraseña debe tener al menos 4 caracteres.');
+      return enviar('pass', { id: u.id, pass: p }, d => msg('ok', d.mensaje || 'Contraseña actualizada.'));
+    },
+    nuevousr(fd) {
+      const nombre = String(fd.get('nombre')).trim(), usuario = String(fd.get('usuario')).trim(), pass = String(fd.get('pass')), agId = Number(fd.get('agencia'));
+      if (!nombre || !usuario || pass.length < 4) return msg('error', 'Completá nombre, usuario y una contraseña de al menos 4 caracteres.');
+      if (!ag(agId)) return msg('error', 'Asigná una agencia.');
+      return enviar('nuevousr', { nombre, usuario, pass, agenciaId: agId }, () => msg('ok', `Usuario ${usuario} creado en la agencia ${codAg(agId)}.`));
+    },
+    nuevaag(fd) {
+      const codigo = String(fd.get('codigo')).trim().toUpperCase(); if (!codigo) return;
+      return enviar('nuevaag', { codigo }, () => msg('ok', `Agencia ${codigo} agregada.`));
+    },
+    nuevaemp(fd) {
+      const n = String(fd.get('nombre')).trim(); if (!n) return;
+      return enviar('nuevaemp', { nombre: n }, () => msg('ok', `Empresa ${n} agregada.`));
+    },
+    nuevomed(fd) {
+      const n = String(fd.get('nombre')).trim(); if (!n) return;
+      return enviar('nuevomed', { nombre: n, grupo: fd.get('grupo') }, () => msg('ok', `Modo de pago ${n} agregado.`));
+    }
+  };
+
+  function pedir(texto, siAcepta, etiqueta = 'Confirmar') {
+    const d = document.createElement('div'); d.className = 'modal-fondo';
+    d.innerHTML = `<div class="modal" role="dialog" aria-modal="true"><p>${esc(texto)}</p><div class="modal-btns"><button class="btn-secundario" data-m="no">Cancelar</button><button class="btn-cierre" data-m="si">${esc(etiqueta)}</button></div></div>`;
+    d.addEventListener('click', ev => {
+      const m = ev.target.closest('[data-m]'); if (!m && ev.target !== d) return;
+      ev.stopPropagation(); d.remove();
+      if (m && m.dataset.m === 'si') { siAcepta(); render(); window.scrollTo(0, 0); }
+    });
+    document.body.appendChild(d); d.querySelector('[data-m="si"]').focus();
+    return false;
+  }
+
+  async function generarPDF(modo, boton) {
+    if (modo === 'imprimir' && !(window.claude && window.claude.use)) { window.print(); return; } // en la app real se imprime directo
+    const c = S.cajas.find(x => x.id === reporteId);
+    const nombre = ('cierre-' + nombreCaja(c)).replace(/\s+/g, '-').toLowerCase() + '.pdf';
+    if (!window.jspdf || !window.html2canvas) { if (modo === 'imprimir') window.print(); else msg('error', 'No se pudo cargar el generador de PDF.'), render(); return; }
+    const botones = document.querySelectorAll('[data-act="pdf"]'), txt = boton.textContent;
+    botones.forEach(x => x.disabled = true); boton.textContent = 'Generando…';
+    let marco;
+    try {
+      // armar el reporte con el formato de impresión en un marco oculto del ancho de una hoja A4
+      const css = document.querySelector('style').textContent.replace('@media print {', '@media all {').replace('@media screen and (max-width:820px)', '@media (max-width:1px)');
+      const fuentes = [...document.querySelectorAll('link[href*="fonts.googleapis"]')].map(l => l.outerHTML).join('');
+      const main = document.querySelector('main').cloneNode(true);
+      main.querySelectorAll('.no-print, .aviso').forEach(n => n.remove());
+      marco = document.createElement('iframe');
+      marco.style.cssText = 'position:fixed; left:-10000px; top:0; width:740px; height:1200px; border:0;';
+      document.body.appendChild(marco);
+      const d = marco.contentDocument;
+      d.open(); d.write(`<!doctype html><html lang="es" data-theme="light"><head><meta charset="utf-8">${fuentes}<style>${css} :root{color-scheme:light} body{margin:0;background:#fff}</style></head><body>${main.outerHTML}</body></html>`); d.close();
+      await new Promise(ok => setTimeout(ok, 150));
+      try { await d.fonts.ready; } catch (e) {}
+      const lienzo = await html2canvas(d.body, { scale: 2, backgroundColor: '#ffffff', windowWidth: 740, width: 740 });
+      const { jsPDF } = window.jspdf, pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+      const mg = 8, anchoMm = 210 - mg * 2, altoMm = 297 - mg * 2;
+      let ancho = anchoMm, alto = lienzo.height * anchoMm / lienzo.width;
+      if (alto > altoMm && alto <= altoMm * 1.15) { alto = altoMm; ancho = lienzo.width * altoMm / lienzo.height; } // si se pasa un poco, se achica para que entre en una hoja
+      if (alto <= altoMm) pdf.addImage(lienzo.toDataURL('image/jpeg', .92), 'JPEG', mg + (anchoMm - ancho) / 2, mg, ancho, alto);
+      else { // varias hojas
+        const pxPorHoja = Math.floor(lienzo.width * altoMm / anchoMm);
+        for (let y = 0, n = 0; y < lienzo.height; y += pxPorHoja, n++) {
+          const h = Math.min(pxPorHoja, lienzo.height - y), parte = document.createElement('canvas');
+          parte.width = lienzo.width; parte.height = h;
+          parte.getContext('2d').drawImage(lienzo, 0, y, lienzo.width, h, 0, 0, lienzo.width, h);
+          if (n) pdf.addPage();
+          pdf.addImage(parte.toDataURL('image/jpeg', .92), 'JPEG', mg, mg, anchoMm, h * anchoMm / lienzo.width);
+        }
+      }
+      if (modo === 'imprimir') pdf.autoPrint();
+      const blob = pdf.output('blob');
+      let dl = null;
+      try { dl = window.claude && claude.use ? await claude.use('downloads') : null; } catch (e) { dl = null; }
+      if (dl) {
+        try {
+          await dl.save({ filename: nombre, data: blob });
+          msg('ok', modo === 'imprimir' ? 'PDF descargado. Al abrirlo se abre la ventana de impresión.' : 'PDF guardado.');
+        } catch (e) { if (e && e.code !== 'declined') msg('error', 'No se pudo guardar el PDF.'); }
+      } else {
+        const url = URL.createObjectURL(blob);
+        if (modo === 'imprimir') { const w = window.open(url); if (!w) window.print(); }
+        else { const a = document.createElement('a'); a.href = url; a.download = nombre; document.body.appendChild(a); a.click(); a.remove(); }
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+        if (modo !== 'imprimir') msg('ok', 'PDF guardado.');
+      }
+    } catch (e) {
+      console.error(e); msg('error', 'No se pudo generar el PDF.');
+    } finally {
+      if (marco) marco.remove();
+      boton.textContent = txt; botones.forEach(x => x.disabled = false); render();
+    }
+  }
+
+  const acts = {
+    salir() { api('/api/salir', {}).then(() => { U = null; S = null; view = 'caja'; render(); }); return false; },
+    anular(b) {
+      const o = S.ops.find(x => x.id === Number(b.dataset.id));
+      if (!o || o.anulada) return;
+      if (!esMaster() && o.usuarioId !== U.id) return msg('error', 'Solo podés anular operaciones que cargaste vos.');
+      return pedir('¿Anular esta operación?', () => { enviar('anular', { id: o.id }, () => msg('ok', 'Operación anulada.')); }, 'Anular');
+    },
+    ver(b) {
+      const id = Number(b.dataset.id);
+      api(`/api/caja/${id}/ops`).then(d => {
+        if (d.error) msg('error', d.error); else { S.ops = S.ops.filter(o => o.cajaId !== id).concat(d.ops); pendCierre[id] = d.pendientes || []; reporteId = id; view = 'reporte'; window.scrollTo(0, 0); }
+        render();
+      });
+      return false;
+    },
+    pdf(b) { if (!b.disabled) generarPDF(b.dataset.modo, b); return false; },
+    cobrarpend(b) { last.tipo = 'ingreso'; last.subingreso = 'cobro'; last.pend = b.dataset.id; window.scrollTo(0, 0); },
+    togusr(b) { return enviar('togusr', { id: Number(b.dataset.id) }); },
+    togag(b) { const a = ag(Number(b.dataset.id)); return enviar('togag', { id: a.id }, () => msg('ok', `Agencia ${a.codigo} ${a.activa ? 'desactivada' : 'activada'}.`)); },
+    togemp(b) { return enviar('togemp', { id: Number(b.dataset.id) }); },
+    togmed(b) { return enviar('togmed', { id: Number(b.dataset.id) }); }
+  };
+
+  document.addEventListener('submit', e => {
+    const f = e.target.closest('form[data-form]'); if (!f) return;
+    e.preventDefault();
+    if (!U && f.dataset.form !== 'login') return;
+    const res = forms[f.dataset.form](new FormData(f), f);
+    if (res !== false) render();
+  });
+  document.addEventListener('click', e => {
+    const nav = e.target.closest('[data-nav]');
+    if (nav) { view = nav.dataset.nav; render(); window.scrollTo(0, 0); return; }
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    const res = acts[b.dataset.act](b);
+    if (res !== false) render();
+  });
+  document.addEventListener('change', e => {
+    const t = e.target;
+    if (t.id === 'sel-subegreso' || t.id === 'sel-subingreso' || t.id === 'sel-pend') { aplicarTipo(t.closest('form')); const i = document.getElementById('importe'); if (!i.readOnly) i.focus(); return; }
+    if (t.id === 'sel-medio') { aplicarTipo(t.closest('form')); const ci = document.querySelector('#campo-cupon input'); if (!ci.disabled) ci.focus(); return; }
+    if (t.name === 'tipo' && t.closest('#form-op')) { last.tipo = t.value; aplicarTipo(t.closest('form')); document.getElementById('importe').focus(); return; }
+    if (t.dataset.change === 'agencia') { agSel = Number(t.value); if (view === 'reporte') view = 'historial'; render(); }
+    else if (t.dataset.change === 'histag') { histAg = t.value; render(); }
+    else if (t.dataset.change === 'usrag') { const u = usr(Number(t.dataset.id)), agId = Number(t.value); enviar('usrag', { id: u.id, agenciaId: agId }, () => msg('ok', `${u.nombre} ahora está en la agencia ${codAg(agId)}.`)); }
+  });
+  function formatoMiles(el, ev) {
+    let v = el.value;
+    if (ev && ev.data === '.' && !v.includes(',')) { const p = el.selectionStart; v = v.slice(0, p - 1) + ',' + v.slice(p); } // el punto del teclado numérico se toma como coma decimal
+    const pos = el.selectionStart, antes = v.slice(0, pos).replace(/[^\d,]/g, '').length;
+    let limpio = v.replace(/[^\d,]/g, ''); const k = limpio.indexOf(',');
+    if (k >= 0) limpio = limpio.slice(0, k + 1) + limpio.slice(k + 1).replace(/,/g, '').slice(0, 2);
+    let [ent, dec] = limpio.split(',');
+    ent = ent.replace(/^0+(?=\d)/, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const nuevo = dec !== undefined ? ent + ',' + dec : ent;
+    if (nuevo === el.value) return;
+    el.value = nuevo;
+    let n = 0, i = 0; while (i < nuevo.length && n < antes) { if (/[\d,]/.test(nuevo[i])) n++; i++; }
+    try { el.setSelectionRange(i, i); } catch (e) {}
+  }
+  document.addEventListener('input', e => {
+    if (e.target.matches && e.target.matches('input[inputmode="decimal"]')) formatoMiles(e.target, e);
+    if (e.target.id !== 'contado' && e.target.id !== 'fondoSig') return;
+    const calc = document.getElementById('calc'), esp = parseFloat(calc.dataset.esperado);
+    const vc = parseImporte(document.getElementById('contado').value, true), vf = parseImporte(document.getElementById('fondoSig').value, true) || 0;
+    const dif = document.getElementById('dif'), ren = document.getElementById('rendir');
+    if (vc === null) { dif.textContent = '—'; ren.textContent = '—'; dif.className = ''; return; }
+    const d = Math.round((vc - esp) * 100) / 100;
+    dif.textContent = d === 0 ? 'sin diferencia' : (d > 0 ? 'sobrante ' : 'faltante ') + pesos(Math.abs(d));
+    dif.className = d === 0 ? 'ok' : 'mal';
+    ren.textContent = pesos(vc - vf);
+  });
+
+  cargar();
+  // si quedó abierta mucho tiempo, refrescar los datos al volver a la pestaña
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && U && !ocupado && !document.querySelector('.modal-fondo') && view !== 'cierre') cargar(); });
+})();
+</script>
+</body>
+</html>
