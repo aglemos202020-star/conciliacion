@@ -347,6 +347,7 @@ HTML = """
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Conciliador Bancario</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✅</text></svg>">
 <style>
   :root{--verde:#C6EFCE;--verde-t:#1D9E75;--amarillo:#FFEB9C;--amarillo-t:#854F0B;
         --azul:#1F4E79;--bg:#F7F8FA;--card:#fff;--border:#E2E4E8;--text:#1A1A2E;--muted:#6B7280;}
