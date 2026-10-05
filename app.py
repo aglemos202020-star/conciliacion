@@ -796,15 +796,26 @@ function check(){document.getElementById('run-btn').disabled=!(xlsxFile&&compFil
 document.getElementById('inp-xlsx').onchange=function(e){if(e.target.files[0]){xlsxFile=e.target.files[0];renderXlsx();check();}};
 document.getElementById('inp-comp').onchange=function(e){compFiles=compFiles.concat(Array.from(e.target.files));renderComp();check();};
 
+// Prevenir que el navegador abra el archivo al soltar fuera del área
+document.addEventListener('dragover',function(e){e.preventDefault();});
+document.addEventListener('drop',function(e){e.preventDefault();});
+
 ['drop-xlsx','drop-comp'].forEach(function(id){
   var el=document.getElementById(id);
-  el.addEventListener('dragover',function(e){e.preventDefault();el.style.background='#F0F4FF';});
-  el.addEventListener('dragleave',function(){el.style.background='';});
+  el.addEventListener('dragenter',function(e){e.preventDefault();e.stopPropagation();el.style.background='#F0F4FF';el.style.borderColor='#93C5FD';});
+  el.addEventListener('dragover',function(e){e.preventDefault();e.stopPropagation();el.style.background='#F0F4FF';el.style.borderColor='#93C5FD';});
+  el.addEventListener('dragleave',function(e){e.stopPropagation();el.style.background='';el.style.borderColor='';});
   el.addEventListener('drop',function(e){
-    e.preventDefault();el.style.background='';
+    e.preventDefault();e.stopPropagation();
+    el.style.background='';el.style.borderColor='';
     var files=Array.from(e.dataTransfer.files);
-    if(id==='drop-xlsx'){var f=files.find(function(f){return['xlsx','xls','csv'].includes(ext(f.name));});if(f){xlsxFile=f;renderXlsx();check();}}
-    else{compFiles=compFiles.concat(files.filter(function(f){return['pdf','jpg','jpeg','png'].includes(ext(f.name));}));renderComp();check();}
+    if(id==='drop-xlsx'){
+      var f=files.find(function(f){return['xlsx','xls','csv'].includes(ext(f.name));});
+      if(f){xlsxFile=f;renderXlsx();check();}
+    } else {
+      var valid=files.filter(function(f){return['pdf','jpg','jpeg','png'].includes(ext(f.name));});
+      if(valid.length){compFiles=compFiles.concat(valid);renderComp();check();}
+    }
   });
 });
 
