@@ -687,20 +687,20 @@ tr.sinmatch td{background:#FFCCCC}
       <div class="card-title">Archivos</div>
       <div class="upload-grid">
         <div>
-          <label for="inp-xlsx" class="drop" id="drop-xlsx" style="display:block">
+          <div class="drop" id="drop-xlsx" onclick="document.getElementById('inp-xlsx').click()">
             <div style="font-size:24px;margin-bottom:6px">📊</div>
             <div style="font-weight:600">Planilla de movimientos</div>
             <div style="font-size:13px;color:#6B7280;margin-top:6px">Excel (.xlsx) del banco</div>
-          </label>
+          </div>
           <input type="file" id="inp-xlsx" accept=".xlsx,.xls,.csv" style="display:none">
           <div class="file-list" id="list-xlsx"></div>
         </div>
         <div>
-          <label for="inp-comp" class="drop" id="drop-comp" style="display:block">
+          <div class="drop" id="drop-comp" onclick="document.getElementById('inp-comp').click()">
             <div style="font-size:24px;margin-bottom:6px">🗂</div>
             <div style="font-weight:600">Comprobantes de transferencia</div>
             <div style="font-size:13px;color:#6B7280;margin-top:6px">PDF, JPG o PNG — varios a la vez</div>
-          </label>
+          </div>
           <input type="file" id="inp-comp" accept=".pdf,.jpg,.jpeg,.png" multiple style="display:none">
           <div class="file-list" id="list-comp"></div>
         </div>
@@ -793,20 +793,12 @@ function renderComp(){
 }
 function check(){document.getElementById('run-btn').disabled=!(xlsxFile&&compFiles.length>0);}
 
-document.getElementById('inp-xlsx').addEventListener('change',function(e){
+document.getElementById('inp-xlsx').onchange=function(e){
   if(e.target.files&&e.target.files[0]){xlsxFile=e.target.files[0];renderXlsx();check();}
-});
-document.getElementById('inp-comp').addEventListener('change',function(e){
-  if(e.target.files&&e.target.files.length){
-    compFiles=compFiles.concat(Array.from(e.target.files));
-    renderComp();check();
-    this.value=''; // permite seleccionar el mismo archivo de nuevo
-  }
-});
-
-// Prevenir que el navegador abra el archivo al soltar fuera del área
-document.addEventListener('dragover',function(e){e.preventDefault();});
-document.addEventListener('drop',function(e){e.preventDefault();});
+};
+document.getElementById('inp-comp').onchange=function(e){
+  if(e.target.files&&e.target.files.length){compFiles=compFiles.concat(Array.from(e.target.files));renderComp();check();}
+};
 
 ['drop-xlsx','drop-comp'].forEach(function(id){
   var el=document.getElementById(id);
