@@ -660,6 +660,7 @@ tr.sinmatch td{background:#FFCCCC}
   </div>
 </header>
 
+<div id="app-config" data-master="{{ 'true' if role=='master' else 'false' }}" style="display:none"></div>
 <div class="tabs-bar">
   <button class="tab active" onclick="showTab('conciliar',this)">Nueva Conciliación</button>
   <button class="tab" onclick="showTab('historial',this);loadHistorial()">Historial</button>
@@ -776,7 +777,8 @@ tr.sinmatch td{background:#FFCCCC}
 </div>
 
 <script>
-var xlsxFile=null, compFiles=[], lastResults=[], lastSinMatch=[], isMaster={{ 'true' if role=='master' else 'false' }};
+var xlsxFile=null, compFiles=[], lastResults=[], lastSinMatch=[];
+var isMaster=document.getElementById('app-config').dataset.master==='true';
 
 function ext(n){return(n||'').split('.').pop().toLowerCase();}
 function badgeClass(n){var e=ext(n);if(['xlsx','xls','csv'].includes(e))return'badge-xlsx';return e==='pdf'?'badge-pdf':'badge-img';}
