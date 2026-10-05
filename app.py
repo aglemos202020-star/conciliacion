@@ -26,9 +26,9 @@ DB_PATH       = os.environ.get("DB_PATH", "conciliador.db")
 UMBRAL_MATCH  = 4
 
 BANK_CONFIG = {
-    "Ciudad": {"label":"Banco Ciudad (Argentina)","filter_starts":["TRANSFER"],"exclude_cuits":["30708635754","30711747709"]},
-    "ITAU":   {"label":"ITAU (Paraguay)",          "filter_starts":["TRANSFER"],"exclude_cuits":[]},
-    "UENO":   {"label":"UENO (Paraguay)",           "filter_starts":["TRANSFER"],"exclude_cuits":[]},
+    "Ciudad": {"label":"Banco Ciudad (Argentina)","filter_starts":["TRANSFER"],"exclude_cuits":["30708635754","30711747709"],"moneda":"ARS"},
+    "ITAU":   {"label":"ITAU (Paraguay)",          "filter_starts":["TRANSFER"],"exclude_cuits":[],"moneda":"PYG"},
+    "UENO":   {"label":"UENO (Paraguay)",           "filter_starts":["TRANSFER"],"exclude_cuits":[],"moneda":"PYG"},
 }
 
 app = Flask(__name__)
@@ -46,9 +46,12 @@ def init_db():
     conn.executescript("""
         CREATE TABLE IF NOT EXISTS conciliaciones (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            banco TEXT, total_comp INTEGER, verificados INTEGER, sin_match INTEGER,
+            banco TEXT, moneda TEXT, total_comp INTEGER, verificados INTEGER,
+            sin_match INTEGER, total_importe REAL, detalle TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+        -- Migracion: agregar columnas si no existen
+
         CREATE TABLE IF NOT EXISTS comp_usados (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             file_hash TEXT UNIQUE, nombre_archivo TEXT,
@@ -57,6 +60,11 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
+    conn.commit()
+    # Migracion segura: agregar columnas nuevas si no existen
+    for col, typedef in [("moneda","TEXT"), ("total_importe","REAL"), ("detalle","TEXT")]:
+        try: conn.execute(f"ALTER TABLE conciliaciones ADD COLUMN {col} {typedef}")
+        except: pass
     conn.commit(); conn.close()
 
 def hash_file(path):
@@ -72,10 +80,10 @@ def check_duplicados(comp_paths):
         if row: dups.append({"archivo":Path(p).name,"hash":fh,"conciliacion_id":row["conciliacion_id"]})
     conn.close(); return dups
 
-def guardar_conciliacion(banco, comp_data_list, verificados):
+def guardar_conciliacion(banco, comp_data_list, verificados, moneda="ARS", total_importe=0, detalle=None):
     conn = get_db()
-    cur = conn.execute("INSERT INTO conciliaciones (banco,total_comp,verificados,sin_match) VALUES (?,?,?,?)",
-        (banco, len(comp_data_list), verificados, len(comp_data_list)-verificados))
+    cur = conn.execute("INSERT INTO conciliaciones (banco,moneda,total_comp,verificados,sin_match,total_importe,detalle) VALUES (?,?,?,?,?,?,?)",
+        (banco, moneda, len(comp_data_list), verificados, len(comp_data_list)-verificados, total_importe, json.dumps(detalle or [])))
     cid = cur.lastrowid
     for item in comp_data_list:
         try:
@@ -206,7 +214,8 @@ def conciliar(planilla_path,comp_paths,bank_key):
         mov_match=next((r for r in rows if r["comprobante"]==c["file"]),None)
         comp_result.append({"file":c["file"],"hash":c["hash"],"fecha":c.get("fecha",""),"monto":c.get("monto",0),
             "nombre":c.get("nombre","—"),"banco_origen":c.get("banco_origen","—"),"cuit":c.get("cuit","—"),
-            "verificado":verificado,"match":mov_match["match"] if mov_match else ""})
+            "verificado":verificado,"match":mov_match["match"] if mov_match else "",
+            "error_extraccion":c.get("error","")})
     sin_match=[c for c in comp_result if not c["verificado"]]
     return {"rows":rows,"comp_result":comp_result,"sin_match":sin_match,"total_comp":len(comprobantes),"verificados":sum(1 for c in comp_result if c["verificado"])}
 
@@ -307,10 +316,27 @@ def conciliar_route():
             if dups: return jsonify({"duplicados":dups})
         result=conciliar(plan_path,comp_paths,bank_key)
         comp_data=[{"file":c["file"],"hash":c["hash"],"monto":c.get("monto"),"fecha":c.get("fecha"),"nombre":c.get("nombre")} for c in result["comp_result"]]
-        cid=guardar_conciliacion(bank_key,comp_data,result["verificados"])
+        moneda = BANK_CONFIG.get(bank_key,{}).get("moneda","ARS")
+        total_importe = sum(c.get("monto") or 0 for c in result["comp_result"] if c.get("verificado"))
+        cid=guardar_conciliacion(bank_key,comp_data,result["verificados"],moneda,total_importe,result["comp_result"])
         result["conciliacion_id"]=cid
         return jsonify(result)
     except Exception as e: return jsonify({"error":str(e)})
+
+@app.route("/historial",methods=["GET"])
+def historial_route():
+    conn=get_db()
+    rows=conn.execute("SELECT id,banco,moneda,total_comp,verificados,sin_match,total_importe,created_at FROM conciliaciones ORDER BY created_at DESC LIMIT 100").fetchall()
+    conn.close()
+    return jsonify([dict(r) for r in rows])
+
+@app.route("/historial/<int:cid>",methods=["GET"])
+def historial_detalle(cid):
+    conn=get_db()
+    row=conn.execute("SELECT detalle FROM conciliaciones WHERE id=?",(cid,)).fetchone()
+    conn.close()
+    if not row or not row["detalle"]: return jsonify([])
+    return jsonify(json.loads(row["detalle"]))
 
 @app.route("/exportar",methods=["POST"])
 def exportar_route():
