@@ -4,3 +4,4 @@ pandas
 openpyxl
 reportlab
 gunicorn
+python-docx
